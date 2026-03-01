@@ -3,7 +3,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Lock, Send } from 'lucide-react';
-import { createShare } from '@/lib/shares';
 import { toast } from 'sonner';
 
 interface ShareFormProps {
@@ -15,7 +14,7 @@ export function ShareForm({ onShareCreated }: ShareFormProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
       toast.error('Please enter some content to share');
@@ -23,13 +22,26 @@ export function ShareForm({ onShareCreated }: ShareFormProps) {
     }
     setLoading(true);
     try {
-      const item = createShare(content, password);
+      const response = await fetch('/api/shares', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content, password: password || undefined }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create share');
+      }
+
+      const item = await response.json();
       toast.success('Share created!');
       onShareCreated(item.slug);
       setContent('');
       setPassword('');
-    } catch {
-      toast.error('Failed to create share');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create share');
     } finally {
       setLoading(false);
     }
