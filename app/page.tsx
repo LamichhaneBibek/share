@@ -1,118 +1,125 @@
 'use client';
 
-import { useState } from 'react';
-import { Clipboard, Lock, Clock } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Clipboard, Lock, Clock, Sparkles } from 'lucide-react';
 import { ShareForm } from '@/components/share-form';
 import { SharesList } from '@/components/shares-list';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { getShares } from '@/lib/shares';
 import { Input } from '@/components/ui/input';
-import { CopyButton } from '@/components/copy-button';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function Home() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [shares, setShares] = useState<any[]>([]);
   const [newShareUrl, setNewShareUrl] = useState<string | null>(null);
 
-  const handleShare = () => {
-    setRefreshTrigger((prev) => prev + 1);
+  // Use useEffect to prevent hydration issues with localStorage
+  useEffect(() => {
+    setShares(getShares());
+  }, []);
+
+  const refresh = useCallback(() => {
+    setShares(getShares());
+  }, []);
+
+  const handleShareCreated = (slug: string) => {
+    const url = `${window.location.origin}/share/${slug}`;
+    setNewShareUrl(url);
+    refresh();
   };
 
-  const handleNewShare = (url: string) => {
-    setNewShareUrl(url);
-    handleShare();
+  const copyShareUrl = async () => {
+    if (!newShareUrl) return;
+    await navigator.clipboard.writeText(newShareUrl);
+    toast.success('Link copied!');
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* optionally show full-width share URL above everything */}
+    <div className="min-h-screen bg-background">
+      {/* New share URL banner */}
       {newShareUrl && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <Card className="w-full p-4 border-border">
-            <p className="text-sm text-muted-foreground mb-2">
-              Share this link:
-            </p>
-            <div className="flex items-center gap-2 w-full">
-              <Input
-                value={newShareUrl}
-                readOnly
-                className="flex-1 min-w-0 max-w-full text-sm font-mono"
-                onFocus={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <div className="flex-shrink-0">
-                <CopyButton content={newShareUrl} label="Copy" />
-              </div>
-            </div>
+        <div className="gradient-hero px-4 py-3">
+          <div className="max-w-3xl mx-auto flex items-center gap-3">
+            <Sparkles className="h-4 w-4 text-primary-foreground flex-shrink-0" />
+            <Input
+              readOnly
+              value={newShareUrl}
+              className="bg-primary-foreground/20 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/60 text-sm h-9 flex-1"
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
             <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => setNewShareUrl(null)}
+              size="sm"
+              variant="secondary"
+              onClick={copyShareUrl}
+              className="flex-shrink-0 font-semibold"
             >
-              Share Another
+              Copy
             </Button>
-          </Card>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setNewShareUrl(null)}
+              className="text-primary-foreground hover:bg-primary-foreground/10 flex-shrink-0"
+            >
+              ✕
+            </Button>
+          </div>
         </div>
       )}
-      {/* Hero section */}
-      <div className="w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
-        <div className="max-w-3xl mx-auto text-center px-4">
-          <h1 className="text-5xl font-extrabold leading-tight">
+
+      {/* Hero */}
+      <header className="gradient-hero py-16 pb-20">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-primary-foreground tracking-tight mb-4">
             Share & Paste
           </h1>
-          <p className="mt-4 text-lg sm:text-xl max-w-2xl mx-auto">
+          <p className="text-primary-foreground/90 text-lg max-w-xl mx-auto mb-2">
             Quickly share links and text with short, secure URLs. No signup
             required — everything is tied to your private session.
           </p>
-          <p className="mt-6 text-sm opacity-90">
-            Works on desktop and mobile, and keeps your data private within your
-            browser session.
+          <p className="text-primary-foreground/60 text-sm mb-8">
+            Works on desktop and mobile. Your data stays private in your browser.
           </p>
-            {/* quick feature list */}
-            <div className="mt-8 grid gap-6 sm:grid-cols-3 text-center text-white/90">
-              <div className="flex flex-col items-center">
-                <Clipboard className="w-6 h-6 mb-2" />
-                <span className="text-sm">Instant sharing</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <Lock className="w-6 h-6 mb-2" />
-                <span className="text-sm">Session‑private</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <Clock className="w-6 h-6 mb-2" />
-                <span className="text-sm">No signup</span>
-              </div>
-            </div>
-        </div>
-      </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        {/* Main Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Form Section */}
-          <div className="lg:col-span-1">
-              <Card className="w-full p-6 border-border shadow-lg">
-                <ShareForm onShare={handleNewShare} />
-            </Card>
+          <div className="flex justify-center gap-10 text-primary-foreground/80">
+            {[
+              { icon: Clipboard, label: 'Instant sharing' },
+              { icon: Lock, label: 'Session-private' },
+              { icon: Clock, label: 'No signup' },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-2">
+                <Icon className="h-6 w-6" />
+                <span className="text-xs font-medium">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-5xl mx-auto px-4 -mt-10">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Form */}
+          <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
+            <ShareForm onShareCreated={handleShareCreated} />
           </div>
 
-          {/* Shares List Section */}
-          <div className="lg:col-span-2">
-            <Card className="p-6 border-border shadow-lg">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Your Recent Shares
-              </h2>
-              <SharesList refreshTrigger={refreshTrigger} />
-            </Card>
+          {/* Shares list */}
+          <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
+            <h2 className="text-lg font-bold text-foreground mb-4">
+              Your Recent Shares
+            </h2>
+            <SharesList shares={shares} onDelete={refresh} />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-12 text-center text-sm text-muted-foreground">
-          <p>
-            Your session is secure and private. Shares are unique to your
-            session.
+        <footer className="text-center py-10">
+          <p className="text-xs text-muted-foreground">
+            Your session is secure and private. Shares are unique to your session.
           </p>
-        </div>
-      </div>
-    </main>
+        </footer>
+      </main>
+    </div>
   );
 }
