@@ -123,3 +123,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@utility gradient-hero {
+  @apply bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500;
+}
+
+@utility shadow-card {
+  @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)];
+}
