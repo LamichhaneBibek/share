@@ -1,197 +1,115 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState } from 'react';
+import { ShareItem, deleteShare } from '@/lib/shares';
+import { Link2, Copy, Trash2, Lock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Copy, Check, Link2, Trash2, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
-import Link from 'next/link';
-import { CopyButton } from '@/components/copy-button';
-
-interface SharedItem {
-  id: string;
-  slug: string;
-  content: string;
-  password: string | null;
-  created_at: string;
-}
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface SharesListProps {
-  refreshTrigger?: number;
+  shares: ShareItem[];
+  onDelete: () => void;
 }
 
-interface PaginationData {
-  items: SharedItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+export function SharesList({ shares, onDelete }: SharesListProps) {
+  const router = useRouter();
 
-export function SharesList({ refreshTrigger }: SharesListProps) {
-  const [shares, setShares] = useState<SharedItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const loadShares = async (pageNum: number = 1) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/shares?page=${pageNum}&limit=10`);
-      if (!response.ok) {
-        throw new Error('Failed to load shares');
-      }
-      const data: PaginationData = await response.json();
-      setShares(data.items);
-      setPage(pageNum);
-      setTotalPages(data.pagination.totalPages);
-    } catch (error) {
-      console.error('[v0] Error loading shares:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load shares',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+  const copyLink = async (slug: string) => {
+    const url = `${window.location.origin}/share/${slug}`;
+    await navigator.clipboard.writeText(url);
+    toast.success('Link copied!');
   };
 
-  useEffect(() => {
-    loadShares(1);
-  }, [refreshTrigger]);
-
-  const deleteShare = async (slug: string) => {
-    if (!window.confirm('Are you sure you want to delete this share?')) {
-      return;
-    }
-
-    setDeleting(slug);
-    try {
-      const response = await fetch(`/api/shares/${slug}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete share');
-      }
-
-      setShares(shares.filter((s) => s.slug !== slug));
-      toast({
-        title: 'Deleted',
-        description: 'Share deleted successfully',
-      });
-    } catch (error) {
-      console.error('[v0] Error deleting share:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete share',
-        variant: 'destructive',
-      });
-    } finally {
-      setDeleting(null);
-    }
+  const copyContent = async (content: string) => {
+    await navigator.clipboard.writeText(content);
+    toast.success('Content copied!');
   };
 
-  if (loading) {
-    return (
-      <div className="text-center text-muted-foreground">
-        Loading your shares...
-      </div>
-    );
-  }
+  const handleDelete = (id: string) => {
+    deleteShare(id);
+    onDelete();
+    toast.success('Share deleted');
+  };
 
   if (shares.length === 0) {
     return (
-      <div className="text-center text-muted-foreground">
-        <p>No shares yet. Create your first share above!</p>
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        <Link2 className="h-10 w-10 mb-3 opacity-40" />
+        <p className="text-sm font-medium">No shares yet</p>
+        <p className="text-xs mt-1">Create your first share to get started</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
-        {shares.map((share) => (
-          <Card
-            key={share.id}
-            className="p-4 hover:bg-muted/50 transition-colors border-border"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-sm text-foreground break-words line-clamp-2">
-                    {share.content}
-                  </p>
-                  {share.password && (
-                    <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" title="Password protected" />
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(share.created_at).toLocaleDateString()} at{' '}
-                  {new Date(share.created_at).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Link href={`/share/${share.slug}`}>
-                  <Button size="sm" variant="ghost">
-                    <Link2 className="w-4 h-4" />
-                    <span className="sr-only">View share</span>
-                  </Button>
-                </Link>
-                <div>
-                  <CopyButton
-                    content={`${window.location.origin}/share/${share.slug}`}
-                    label=""
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => deleteShare(share.slug)}
-                  disabled={deleting === share.slug}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="sr-only">Delete share</span>
-                </Button>
-              </div>
+    <div className="space-y-3">
+      {shares.map((share) => (
+        <div
+          key={share.id}
+          className="group relative flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all duration-200 cursor-pointer"
+          onClick={() => router.push(`/share/${share.slug}`)}
+        >
+          <div className="flex-1 min-w-0 mr-3">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-foreground truncate max-w-[260px]">
+                {share.content.length > 60
+                  ? share.content.substring(0, 60) + '...'
+                  : share.content}
+              </p>
+              {share.password && (
+                <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+              )}
             </div>
-          </Card>
-        ))}
-      </div>
+            <p className="text-xs text-muted-foreground">
+              {new Date(share.created_at).toLocaleDateString('en-US', {
+                month: 'numeric',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadShares(page - 1)}
-            disabled={page === 1 || loading}
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadShares(page + 1)}
-            disabled={page === totalPages || loading}
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                copyLink(share.slug);
+              }}
+              title="Copy link"
+            >
+              <Link2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                copyContent(share.content);
+              }}
+              title="Copy content"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(share.id);
+              }}
+              title="Delete"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
