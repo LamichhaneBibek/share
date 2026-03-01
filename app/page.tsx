@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { Clipboard, Lock, Clock, Sparkles } from 'lucide-react';
 import { ShareForm } from '@/components/share-form';
 import { SharesList } from '@/components/shares-list';
-import { getShares } from '@/lib/shares';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -13,13 +12,24 @@ export default function Home() {
   const [shares, setShares] = useState<any[]>([]);
   const [newShareUrl, setNewShareUrl] = useState<string | null>(null);
 
-  // Use useEffect to prevent hydration issues with localStorage
+  const fetchShares = async () => {
+    try {
+      const res = await fetch('/api/shares');
+      if (res.ok) {
+        const data = await res.json();
+        setShares(data.items || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch shares:', error);
+    }
+  };
+
   useEffect(() => {
-    setShares(getShares());
+    fetchShares();
   }, []);
 
   const refresh = useCallback(() => {
-    setShares(getShares());
+    fetchShares();
   }, []);
 
   const handleShareCreated = (slug: string) => {
