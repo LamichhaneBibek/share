@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShareItem, deleteShare } from '@/lib/shares';
+import { ShareItem } from '@/lib/shares';
 import { Link2, Copy, Trash2, Lock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -24,10 +24,19 @@ export function SharesList({ shares, onDelete }: SharesListProps) {
     toast.success('Content copied!');
   };
 
-  const handleDelete = (id: string) => {
-    deleteShare(id);
-    onDelete();
-    toast.success('Share deleted');
+  const handleDelete = async (slug: string) => {
+    try {
+      const res = await fetch(`/api/shares/${slug}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to delete share');
+      }
+      onDelete();
+      toast.success('Share deleted');
+    } catch (error) {
+      toast.error('Failed to delete share');
+    }
   };
 
   if (shares.length === 0) {
@@ -101,7 +110,7 @@ export function SharesList({ shares, onDelete }: SharesListProps) {
               className="h-8 w-8 text-muted-foreground hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete(share.id);
+                handleDelete(share.slug);
               }}
               title="Delete"
             >
