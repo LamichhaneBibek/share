@@ -21,7 +21,7 @@ export async function GET(
 
     return NextResponse.json(item);
   } catch (error) {
-    console.error('[v0] Error fetching share:', error);
+    console.error('WebApp error fetching share: ', error);
     return NextResponse.json(
       { error: 'Failed to fetch share' },
       { status: 500 }
@@ -51,7 +51,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[v0] Error deleting share:', error);
+    console.error('WebApp error deleting share: ', error);
     return NextResponse.json(
       { error: 'Failed to delete share' },
       { status: 500 }
