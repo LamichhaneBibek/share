@@ -16,10 +16,12 @@ export async function getOrCreateSession(): Promise<string> {
   if (!sessionId) {
     // no cookie at all, create a fresh session
     sessionId = uuidv4();
-    const db = getDatabase();
+    const db = await getDatabase();
 
-    const stmt = db.prepare('INSERT INTO sessions (id) VALUES (?)');
-    stmt.run(sessionId);
+    await db.execute({
+      sql: 'INSERT INTO sessions (id) VALUES (?)',
+      args: [sessionId],
+    });
 
     cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
       maxAge: SESSION_COOKIE_MAX_AGE,
@@ -29,19 +31,23 @@ export async function getOrCreateSession(): Promise<string> {
     });
   } else {
     // cookie existed; make sure it corresponds to a real session in the database
-    const db = getDatabase();
-    const row = db
-      .prepare('SELECT id FROM sessions WHERE id = ?')
-      .get(sessionId);
+    const db = await getDatabase();
+    const result = await db.execute({
+      sql: 'SELECT id FROM sessions WHERE id = ?',
+      args: [sessionId],
+    });
 
-    if (!row) {
+    if (result.rows.length === 0) {
       // stale cookie (e.g. DB was wiped) – treat as if no session
       // we could either reuse the same id or generate a new one; reusing
       // keeps the cookie value stable, but there is no real advantage either way.
       // Create a fresh entry so that foreign key constraints won't fail later.
       const newId = uuidv4();
       sessionId = newId;
-      db.prepare('INSERT INTO sessions (id) VALUES (?)').run(sessionId);
+      await db.execute({
+        sql: 'INSERT INTO sessions (id) VALUES (?)',
+        args: [sessionId],
+      });
 
       // update the cookie in case we changed the id
       cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
