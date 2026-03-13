@@ -1,27 +1,34 @@
-import Database from 'better-sqlite3';
+import { createClient, Client } from '@libsql/client';
 import path from 'path';
 import fs from 'fs';
 
-let db: Database.Database;
+let client: Client;
 
-export function getDatabase(): Database.Database {
-  if (!db) {
-    // In serverless environments like Netlify/Vercel (/var/task), the filesystem is read-only except for /tmp.
-    const isServerless = process.env.NODE_ENV === 'production' || process.cwd().includes('/var/task');
-    const dataDir = isServerless ? '/tmp' : path.join(process.cwd(), 'data');
-    
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+export async function getDatabase(): Promise<Client> {
+  if (!client) {
+    const url = process.env.TURSO_DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN;
+
+    if (url) {
+      client = createClient({
+        url,
+        authToken,
+      });
+    } else {
+      // Fallback to local file for development
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const dbPath = path.join(dataDir, 'app.db');
+      client = createClient({ url: `file:${dbPath}` });
     }
     
-    const dbPath = path.join(dataDir, 'app.db');
-    db = new Database(dbPath);
-    
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON');
+    // Enable foreign keys (Turso/libsql may have them on by default or via pragma)
+    await client.execute('PRAGMA foreign_keys = ON');
     
     // Initialize tables
-    db.exec(`
+    await client.executeMultiple(`
       CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -42,7 +49,7 @@ export function getDatabase(): Database.Database {
     `);
   }
   
-  return db;
+  return client;
 }
 
 export type Session = {
