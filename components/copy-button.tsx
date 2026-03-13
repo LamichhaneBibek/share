@@ -25,7 +25,7 @@ export function CopyButton({ content, label = 'Copy to Clipboard' }: CopyButtonP
 
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('[v0] Error copying to clipboard:', error);
+      console.error('WebApp error copying to clipboard: ', error);
       toast({
         title: 'Error',
         description: 'Failed to copy to clipboard',
