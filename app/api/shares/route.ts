@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionId = await getOrCreateSession();
-    const db = getDatabase();
+    const db = await getDatabase();
     const id = uuidv4();
     const slug = generateSlug();
 
-    const stmt = db.prepare(
-      'INSERT INTO shared_items (id, session_id, slug, content, password) VALUES (?, ?, ?, ?, ?)'
-    );
-    stmt.run(id, sessionId, slug, content, password || null);
+    await db.execute({
+      sql: 'INSERT INTO shared_items (id, session_id, slug, content, password) VALUES (?, ?, ?, ?, ?)',
+      args: [id, sessionId, slug, content, password || null],
+    });
 
     return NextResponse.json({
       id,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const sessionId = await getOrCreateSession();
-    const db = getDatabase();
+    const db = await getDatabase();
 
     // Get pagination parameters
     const url = new URL(request.url);
@@ -62,16 +62,18 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Get total count
-    const countStmt = db.prepare(
-      'SELECT COUNT(*) as total FROM shared_items WHERE session_id = ?'
-    );
-    const { total } = countStmt.get(sessionId) as { total: number };
+    const countResult = await db.execute({
+      sql: 'SELECT COUNT(*) as total FROM shared_items WHERE session_id = ?',
+      args: [sessionId],
+    });
+    const total = Number(countResult.rows[0].total);
 
     // Get paginated items
-    const stmt = db.prepare(
-      'SELECT id, slug, content, password, created_at FROM shared_items WHERE session_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    );
-    const items = stmt.all(sessionId, limit, offset) as SharedItem[];
+    const itemsResult = await db.execute({
+      sql: 'SELECT id, slug, content, password, created_at FROM shared_items WHERE session_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [sessionId, limit, offset],
+    });
+    const items = itemsResult.rows as unknown as SharedItem[];
 
     return NextResponse.json({
       items,
