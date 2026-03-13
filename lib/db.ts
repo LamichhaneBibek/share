@@ -1,11 +1,20 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 let db: Database.Database;
 
 export function getDatabase(): Database.Database {
   if (!db) {
-    const dbPath = path.join(process.cwd(), 'data', 'app.db');
+    // In serverless environments like Netlify/Vercel (/var/task), the filesystem is read-only except for /tmp.
+    const isServerless = process.env.NODE_ENV === 'production' || process.cwd().includes('/var/task');
+    const dataDir = isServerless ? '/tmp' : path.join(process.cwd(), 'data');
+    
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    const dbPath = path.join(dataDir, 'app.db');
     db = new Database(dbPath);
     
     // Enable foreign keys
