@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       hasPassword: !!password,
     });
   } catch (error) {
-    console.error('[v0] Error creating share:', error);
+    console.error('WebApp error creating share: ', error);
     return NextResponse.json(
       { error: 'Failed to create share' },
       { status: 500 }
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[v0] Error fetching shares:', error);
+    console.error('WebApp error fetching shares: ', error);
     return NextResponse.json(
       { error: 'Failed to fetch shares' },
       { status: 500 }
