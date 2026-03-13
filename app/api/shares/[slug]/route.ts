@@ -7,10 +7,13 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const db = getDatabase();
+    const db = await getDatabase();
 
-    const stmt = db.prepare('SELECT * FROM shared_items WHERE slug = ?');
-    const item = stmt.get(slug) as SharedItem | undefined;
+    const result = await db.execute({
+      sql: 'SELECT * FROM shared_items WHERE slug = ?',
+      args: [slug],
+    });
+    const item = result.rows[0] as unknown as SharedItem | undefined;
 
     if (!item) {
       return NextResponse.json(
@@ -35,10 +38,13 @@ export async function DELETE(
 ) {
   try {
     const { slug } = await params;
-    const db = getDatabase();
+    const db = await getDatabase();
 
-    const stmt = db.prepare('SELECT * FROM shared_items WHERE slug = ?');
-    const item = stmt.get(slug) as SharedItem | undefined;
+    const result = await db.execute({
+      sql: 'SELECT * FROM shared_items WHERE slug = ?',
+      args: [slug],
+    });
+    const item = result.rows[0] as unknown as SharedItem | undefined;
 
     if (!item) {
       return NextResponse.json(
@@ -47,7 +53,10 @@ export async function DELETE(
       );
     }
 
-    db.prepare('DELETE FROM shared_items WHERE id = ?').run(item.id);
+    await db.execute({
+      sql: 'DELETE FROM shared_items WHERE id = ?',
+      args: [item.id as string],
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
