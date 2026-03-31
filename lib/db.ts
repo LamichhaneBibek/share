@@ -16,11 +16,19 @@ export async function getDatabase(): Promise<Client> {
       });
     } else {
       // Fallback to local file for development
-      const dataDir = path.join(process.cwd(), 'data');
+      // On platforms like Netlify and Vercel, the filesystem is read-only except for /tmp
+      const isServerless = process.env.NETLIFY === 'true' || process.env.VERCEL === '1';
+      const dataDir = isServerless ? '/tmp' : path.join(process.cwd(), 'data');
+      
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
       }
       const dbPath = path.join(dataDir, 'app.db');
+      
+      if (isServerless) {
+         console.warn(`[database] No TURSO_DATABASE_URL found. Falling back to local database at ${dbPath}. DATA WILL NOT PERSIST!`);
+      }
+      
       client = createClient({ url: `file:${dbPath}` });
     }
     
