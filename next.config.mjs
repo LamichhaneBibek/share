@@ -6,7 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ['better-sqlite3'],
+  serverExternalPackages: ['@libsql/client', 'libsql'],
   // allow other origins during development (e.g. when accessing via LAN IP)
   allowedDevOrigins: ['http://192.168.18.5:3000', 'https://share.lamichhanebibek.com.np'],
 }
