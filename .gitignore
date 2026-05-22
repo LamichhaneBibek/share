@@ -8,3 +8,11 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+
+# Generated / binary files
+data/app.db
+data/app.db-shm
+data/app.db-wal
+package-lock.json
+tsconfig.tsbuildinfo
+next-env.d.ts
