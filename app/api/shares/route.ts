@@ -8,7 +8,7 @@ const MAX_CONTENT_LENGTH = 1_000_000; // 1MB
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { content, password } = body;
+    const { content, password, isPublic } = body;
 
     if (!content || !content.trim()) {
       return NextResponse.json(
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     const slug = generateSlug();
 
     await db.execute({
-      sql: 'INSERT INTO shared_items (id, session_id, slug, content, password) VALUES (?, ?, ?, ?, ?)',
-      args: [id, sessionId, slug, content, password || null],
+      sql: "INSERT INTO shared_items (id, session_id, slug, content, password, is_public, expires_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+15 days'))",
+      args: [id, sessionId, slug, content, password || null, isPublic ? 1 : 0],
     });
 
     return NextResponse.json({
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       slug,
       shareUrl: `/share/${slug}`,
       hasPassword: !!password,
+      isPublic: !!isPublic,
     });
   } catch (error) {
     console.error('WebApp error creating share: ', error);
@@ -61,16 +62,16 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(50, parseInt(url.searchParams.get('limit') || '20'));
     const offset = (page - 1) * limit;
 
-    // Get total count
+    // Get total count (exclude expired)
     const countResult = await db.execute({
-      sql: 'SELECT COUNT(*) as total FROM shared_items WHERE session_id = ?',
+      sql: "SELECT COUNT(*) as total FROM shared_items WHERE session_id = ? AND (expires_at IS NULL OR expires_at > datetime('now'))",
       args: [sessionId],
     });
     const total = Number(countResult.rows[0].total);
 
-    // Get paginated items
+    // Get paginated items (exclude expired)
     const itemsResult = await db.execute({
-      sql: 'SELECT id, slug, content, password, created_at FROM shared_items WHERE session_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      sql: "SELECT id, slug, content, password, is_public, expires_at, created_at FROM shared_items WHERE session_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC LIMIT ? OFFSET ?",
       args: [sessionId, limit, offset],
     });
     const items = itemsResult.rows as unknown as SharedItem[];

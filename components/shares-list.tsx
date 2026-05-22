@@ -1,6 +1,7 @@
-import { useState } from 'react';
+'use client';
+
 import { ShareItem } from '@/lib/shares';
-import { Link2, Copy, Trash2, Lock, ExternalLink } from 'lucide-react';
+import { Link2, Copy, Trash2, Lock, Globe, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -8,9 +9,10 @@ import { useRouter } from 'next/navigation';
 interface SharesListProps {
   shares: ShareItem[];
   onDelete: () => void;
+  onUpdate?: () => void;
 }
 
-export function SharesList({ shares, onDelete }: SharesListProps) {
+export function SharesList({ shares, onDelete, onUpdate }: SharesListProps) {
   const router = useRouter();
 
   const copyLink = async (slug: string) => {
@@ -26,16 +28,27 @@ export function SharesList({ shares, onDelete }: SharesListProps) {
 
   const handleDelete = async (slug: string) => {
     try {
-      const res = await fetch(`/api/shares/${slug}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to delete share');
-      }
+      const res = await fetch(`/api/shares/${slug}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete share');
       onDelete();
       toast.success('Share deleted');
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete share');
+    }
+  };
+
+  const handleTogglePublic = async (slug: string, currentIsPublic: number) => {
+    try {
+      const res = await fetch(`/api/shares/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: currentIsPublic === 0 }),
+      });
+      if (!res.ok) throw new Error('Failed to update share');
+      onUpdate?.();
+      toast.success(currentIsPublic === 0 ? 'Share is now public' : 'Share is now unlisted');
+    } catch {
+      toast.error('Failed to update share visibility');
     }
   };
 
@@ -59,13 +72,18 @@ export function SharesList({ shares, onDelete }: SharesListProps) {
         >
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-medium text-foreground truncate max-w-[260px]">
+              <p className="text-sm font-medium text-foreground truncate max-w-[220px]">
                 {share.content.length > 60
                   ? share.content.substring(0, 60) + '...'
                   : share.content}
               </p>
               {share.password && (
                 <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+              )}
+              {share.is_public === 1 ? (
+                <Globe className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -80,6 +98,22 @@ export function SharesList({ shares, onDelete }: SharesListProps) {
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTogglePublic(share.slug, share.is_public);
+              }}
+              title={share.is_public === 1 ? 'Make unlisted' : 'Make public'}
+            >
+              {share.is_public === 1 ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Globe className="h-4 w-4" />
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="icon"

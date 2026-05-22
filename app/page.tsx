@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Clipboard, Lock, Clock, Sparkles } from 'lucide-react';
+import { Clipboard, Lock, Clock, Sparkles, Globe } from 'lucide-react';
 import { ShareForm } from '@/components/share-form';
 import { SharesList } from '@/components/shares-list';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function Home() {
   const [shares, setShares] = useState<any[]>([]);
@@ -94,8 +95,9 @@ export default function Home() {
           <div className="flex justify-center gap-10 text-primary-foreground/80">
             {[
               { icon: Clipboard, label: 'Instant sharing' },
-              { icon: Lock, label: 'Session-private' },
-              { icon: Clock, label: 'No signup' },
+              { icon: Lock, label: 'Password protect' },
+              { icon: Clock, label: '15-day expiry' },
+              { icon: Globe, label: 'Public feed' },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex flex-col items-center gap-2">
                 <Icon className="h-6 w-6" />
@@ -119,14 +121,24 @@ export default function Home() {
             <h2 className="text-lg font-bold text-foreground mb-4">
               Your Recent Shares
             </h2>
-            <SharesList shares={shares} onDelete={refresh} />
+            <SharesList shares={shares} onDelete={refresh} onUpdate={refresh} />
           </div>
         </div>
 
+        {/* Public feed link */}
+        <div className="text-center py-4">
+          <Link href="/public">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Globe className="h-4 w-4" />
+              Browse Public Feed
+            </Button>
+          </Link>
+        </div>
+
         {/* Footer */}
-        <footer className="text-center py-10">
+        <footer className="text-center py-6">
           <p className="text-xs text-muted-foreground">
-            Your session is secure and private. Shares are unique to your session.
+            Shares expire after 15 days. Unlisted shares are only accessible via direct link.
           </p>
         </footer>
       </main>
