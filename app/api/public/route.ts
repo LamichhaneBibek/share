@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const total = Number(countResult.rows[0].total);
 
     const itemsResult = await db.execute({
-      sql: "SELECT id, slug, content, password, is_public, expires_at, created_at FROM shared_items WHERE is_public = 1 AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC LIMIT ? OFFSET ?",
+      sql: "SELECT id, slug, content, title, language, password, is_public, expires_at, created_at FROM shared_items WHERE is_public = 1 AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC LIMIT ? OFFSET ?",
       args: [limit, offset],
     });
     const items = itemsResult.rows as unknown as SharedItem[];

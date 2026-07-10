@@ -5,13 +5,18 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Copy, Check, ArrowLeft, Lock, ShieldAlert, Globe, EyeOff, Clock, KeyRound } from 'lucide-react';
+import { Copy, Check, ArrowLeft, Lock, ShieldAlert, Globe, EyeOff, Clock, KeyRound, FileCode, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { CodeViewer } from '@/components/code-viewer';
+import { languageLabel, languageExt } from '@/lib/languages';
+import { parseDbDate } from '@/lib/dates';
 
 interface SharedItem {
   id: string;
   slug: string;
   content: string;
+  title: string | null;
+  language: string;
   password: string | null;
   is_public: number;
   expires_at: string | null;
@@ -111,6 +116,21 @@ export default function SharePage() {
     setCopied(true);
     toast.success('Copied!');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadContent = () => {
+    const blob = new Blob([share.content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${share.title?.trim() || share.slug}.${languageExt(share.language)}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const openRaw = () => {
+    const params = share.password && unlocked ? `?password=${encodeURIComponent(share.password)}` : '';
+    window.open(`/raw/${share.slug}${params}`, '_blank');
   };
 
   if (needsPassword) {
@@ -234,7 +254,7 @@ export default function SharePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="max-w-4xl mx-auto px-4 py-10">
         <Link href="/">
           <Button variant="ghost" size="sm" className="mb-6 text-muted-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to Home
@@ -242,61 +262,74 @@ export default function SharePage() {
         </Link>
 
         <div className="bg-card rounded-2xl shadow-card border border-border p-6 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-xs text-muted-foreground">
-              Created{' '}
-              {new Date(share.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-            <div className="flex items-center gap-2">
-              {share.expires_at && (
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-foreground break-words">
+              {share.title?.trim() || 'Untitled paste'}
+            </h1>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className="text-xs text-muted-foreground">
+                Created{' '}
+                {parseDbDate(share.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+              <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  Expires {new Date(share.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <FileCode className="h-3 w-3" />
+                  {languageLabel(share.language)}
                 </span>
-              )}
-              {share.is_public === 1 ? (
-                <span className="flex items-center gap-1 text-xs text-primary">
-                  <Globe className="h-3 w-3" /> Public
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <EyeOff className="h-3 w-3" /> Unlisted
-                </span>
-              )}
-              {share.password && (
-                <span className="flex items-center gap-1 text-xs text-amber-500">
-                  <Lock className="h-3 w-3" /> Protected
-                </span>
-              )}
+                {share.expires_at && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    Expires {parseDbDate(share.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+                {share.is_public === 1 ? (
+                  <span className="flex items-center gap-1 text-xs text-primary">
+                    <Globe className="h-3 w-3" /> Public
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <EyeOff className="h-3 w-3" /> Unlisted
+                  </span>
+                )}
+                {share.password && (
+                  <span className="flex items-center gap-1 text-xs text-amber-500">
+                    <Lock className="h-3 w-3" /> Protected
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="bg-muted/50 rounded-xl p-5 min-h-[120px]">
-            <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-              {share.content}
-            </p>
-          </div>
+          <CodeViewer content={share.content} language={share.language} />
 
-          <Button
-            onClick={copyContent}
-            className="w-full gradient-hero border-0 text-primary-foreground font-semibold h-11"
-          >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" /> Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" /> Copy Content
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={copyContent}
+              className="flex-1 gradient-hero border-0 text-primary-foreground font-semibold h-11"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" /> Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-2" /> Copy
+                </>
+              )}
+            </Button>
+            <Button variant="outline" className="h-11" onClick={openRaw} title="View raw">
+              <FileText className="h-4 w-4 mr-2" /> Raw
+            </Button>
+            <Button variant="outline" className="h-11" onClick={downloadContent} title="Download">
+              <Download className="h-4 w-4 mr-2" /> Download
+            </Button>
+          </div>
         </div>
       </div>
     </div>

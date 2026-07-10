@@ -64,6 +64,14 @@ export async function getDatabase(): Promise<Client> {
       await client.execute('ALTER TABLE shared_items ADD COLUMN expires_at DATETIME');
     } catch { /* already exists */ }
 
+    try {
+      await client.execute('ALTER TABLE shared_items ADD COLUMN title TEXT');
+    } catch { /* already exists */ }
+
+    try {
+      await client.execute("ALTER TABLE shared_items ADD COLUMN language TEXT NOT NULL DEFAULT 'plaintext'");
+    } catch { /* already exists */ }
+
     // Backfill expires_at for any rows missing it
     await client.execute("UPDATE shared_items SET expires_at = datetime(created_at, '+15 days') WHERE expires_at IS NULL");
 
@@ -86,6 +94,8 @@ export type SharedItem = {
   session_id: string;
   slug: string;
   content: string;
+  title: string | null;
+  language: string;
   password: string | null;
   is_public: number;
   expires_at: string | null;

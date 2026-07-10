@@ -5,11 +5,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Globe, Lock, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { languageLabel } from '@/lib/languages';
+import { parseDbDate } from '@/lib/dates';
 
 interface PublicShare {
   id: string;
   slug: string;
   content: string;
+  title: string | null;
+  language: string;
   password: string | null;
   expires_at: string | null;
   created_at: string;
@@ -83,13 +87,19 @@ export default function PublicFeedPage() {
                   <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all duration-200">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {share.content.length > 100
-                          ? share.content.substring(0, 100) + '...'
-                          : share.content}
+                        {share.title?.trim() ||
+                          (share.content.length > 100
+                            ? share.content.substring(0, 100) + '...'
+                            : share.content)}
                       </p>
                       <div className="flex items-center gap-3 mt-1.5">
+                        {share.language && share.language !== 'plaintext' && (
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            {languageLabel(share.language)}
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">
-                          {new Date(share.created_at).toLocaleDateString('en-US', {
+                          {parseDbDate(share.created_at).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric',
@@ -104,7 +114,7 @@ export default function PublicFeedPage() {
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
                             Expires{' '}
-                            {new Date(share.expires_at).toLocaleDateString('en-US', {
+                            {parseDbDate(share.expires_at).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                             })}

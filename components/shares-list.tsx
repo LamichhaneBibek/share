@@ -1,6 +1,8 @@
 'use client';
 
 import { ShareItem } from '@/lib/shares';
+import { languageLabel } from '@/lib/languages';
+import { parseDbDate } from '@/lib/dates';
 import { Link2, Copy, Trash2, Lock, Globe, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -73,9 +75,10 @@ export function SharesList({ shares, onDelete, onUpdate }: SharesListProps) {
           <div className="flex-1 min-w-0 mr-3">
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm font-medium text-foreground truncate max-w-[220px]">
-                {share.content.length > 60
-                  ? share.content.substring(0, 60) + '...'
-                  : share.content}
+                {share.title?.trim() ||
+                  (share.content.length > 60
+                    ? share.content.substring(0, 60) + '...'
+                    : share.content)}
               </p>
               {share.password && (
                 <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
@@ -87,13 +90,18 @@ export function SharesList({ shares, onDelete, onUpdate }: SharesListProps) {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {new Date(share.created_at).toLocaleDateString('en-US', {
+              {parseDbDate(share.created_at).toLocaleDateString('en-US', {
                 month: 'numeric',
                 day: 'numeric',
                 year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
               })}
+              {share.language && share.language !== 'plaintext' && (
+                <span className="ml-2 inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium uppercase tracking-wide">
+                  {languageLabel(share.language)}
+                </span>
+              )}
             </p>
           </div>
 

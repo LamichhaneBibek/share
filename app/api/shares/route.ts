@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateSession, generateSlug } from '@/lib/session';
 import { getDatabase, SharedItem } from '@/lib/db';
+import { isValidLanguage, expiryModifier } from '@/lib/languages';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_CONTENT_LENGTH = 1_000_000; // 1MB
+const MAX_TITLE_LENGTH = 200;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { content, password, isPublic } = body;
+    const { content, password, isPublic, title, language, expiresIn } = body;
 
     if (!content || !content.trim()) {
       return NextResponse.json(
@@ -25,14 +27,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cleanTitle =
+      typeof title === 'string' && title.trim()
+        ? title.trim().slice(0, MAX_TITLE_LENGTH)
+        : null;
+    const cleanLanguage = isValidLanguage(language) ? language : 'plaintext';
+    // expiryModifier only returns whitelisted values, safe to interpolate
+    const modifier = expiryModifier(expiresIn);
+
     const sessionId = await getOrCreateSession();
     const db = await getDatabase();
     const id = uuidv4();
     const slug = generateSlug();
 
     await db.execute({
-      sql: "INSERT INTO shared_items (id, session_id, slug, content, password, is_public, expires_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+15 days'))",
-      args: [id, sessionId, slug, content, password || null, isPublic ? 1 : 0],
+      sql: `INSERT INTO shared_items (id, session_id, slug, content, title, language, password, is_public, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '${modifier}'))`,
+      args: [id, sessionId, slug, content, cleanTitle, cleanLanguage, password || null, isPublic ? 1 : 0],
     });
 
     return NextResponse.json({
@@ -71,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated items (exclude expired)
     const itemsResult = await db.execute({
-      sql: "SELECT id, slug, content, password, is_public, expires_at, created_at FROM shared_items WHERE session_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC LIMIT ? OFFSET ?",
+      sql: "SELECT id, slug, content, title, language, password, is_public, expires_at, created_at FROM shared_items WHERE session_id = ? AND (expires_at IS NULL OR expires_at > datetime('now')) ORDER BY created_at DESC LIMIT ? OFFSET ?",
       args: [sessionId, limit, offset],
     });
     const items = itemsResult.rows as unknown as SharedItem[];
