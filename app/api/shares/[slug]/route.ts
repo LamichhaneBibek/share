@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase, SharedItem } from '@/lib/db';
 import { getOrCreateSession } from '@/lib/session';
+import { isExpired } from '@/lib/dates';
 
 export async function GET(
   request: NextRequest,
@@ -23,7 +24,7 @@ export async function GET(
       );
     }
 
-    if (item.expires_at && new Date(item.expires_at as string) < new Date()) {
+    if (isExpired(item.expires_at)) {
       return NextResponse.json(
         { error: 'This share has expired' },
         { status: 410 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Clipboard, Lock, Clock, Sparkles, Globe } from 'lucide-react';
+import { Clipboard, Lock, Clock, Sparkles, Globe, Code2 } from 'lucide-react';
 import { ShareForm } from '@/components/share-form';
 import { SharesList } from '@/components/shares-list';
 import { Input } from '@/components/ui/input';
@@ -85,8 +85,8 @@ export default function Home() {
             Share & Paste
           </h1>
           <p className="text-primary-foreground/90 text-lg max-w-xl mx-auto mb-2">
-            Quickly share links and text with short, secure URLs. No signup
-            required — everything is tied to your private session.
+            Paste code, links and text — get a short, secure URL with syntax
+            highlighting. No signup required.
           </p>
           <p className="text-primary-foreground/60 text-sm mb-8">
             Works on desktop and mobile. Your data stays private in your browser.
@@ -95,8 +95,9 @@ export default function Home() {
           <div className="flex justify-center gap-10 text-primary-foreground/80">
             {[
               { icon: Clipboard, label: 'Instant sharing' },
+              { icon: Code2, label: 'Syntax highlighting' },
               { icon: Lock, label: 'Password protect' },
-              { icon: Clock, label: '15-day expiry' },
+              { icon: Clock, label: 'Custom expiry' },
               { icon: Globe, label: 'Public feed' },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex flex-col items-center gap-2">
@@ -119,7 +120,7 @@ export default function Home() {
           {/* Shares list */}
           <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
             <h2 className="text-lg font-bold text-foreground mb-4">
-              Your Recent Shares
+              Your Recent Pastes
             </h2>
             <SharesList shares={shares} onDelete={refresh} onUpdate={refresh} />
           </div>
@@ -138,7 +139,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="text-center py-6">
           <p className="text-xs text-muted-foreground">
-            Shares expire after 15 days. Unlisted shares are only accessible via direct link.
+            Pastes expire after your chosen duration (up to 15 days). Unlisted pastes are only accessible via direct link.
           </p>
         </footer>
       </main>

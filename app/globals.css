@@ -149,3 +149,91 @@
 .shake {
   animation: shake 0.5s ease-in-out;
 }
+
+/* Syntax highlighting (highlight.js) — GitHub-inspired, light + dark */
+.hljs-content .hljs-comment,
+.hljs-content .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.hljs-content .hljs-keyword,
+.hljs-content .hljs-selector-tag,
+.hljs-content .hljs-doctag,
+.hljs-content .hljs-meta {
+  color: #d73a49;
+}
+.hljs-content .hljs-string,
+.hljs-content .hljs-regexp,
+.hljs-content .hljs-attr {
+  color: #032f62;
+}
+.hljs-content .hljs-number,
+.hljs-content .hljs-literal,
+.hljs-content .hljs-variable,
+.hljs-content .hljs-template-variable {
+  color: #005cc5;
+}
+.hljs-content .hljs-title,
+.hljs-content .hljs-title.function_,
+.hljs-content .hljs-section,
+.hljs-content .hljs-name {
+  color: #6f42c1;
+}
+.hljs-content .hljs-type,
+.hljs-content .hljs-built_in,
+.hljs-content .hljs-builtin-name,
+.hljs-content .hljs-class .hljs-title,
+.hljs-content .hljs-title.class_ {
+  color: #e36209;
+}
+.hljs-content .hljs-symbol,
+.hljs-content .hljs-bullet,
+.hljs-content .hljs-link {
+  color: #22863a;
+}
+.hljs-content .hljs-emphasis {
+  font-style: italic;
+}
+.hljs-content .hljs-strong {
+  font-weight: 600;
+}
+
+.dark .hljs-content .hljs-comment,
+.dark .hljs-content .hljs-quote {
+  color: #8b949e;
+}
+.dark .hljs-content .hljs-keyword,
+.dark .hljs-content .hljs-selector-tag,
+.dark .hljs-content .hljs-doctag,
+.dark .hljs-content .hljs-meta {
+  color: #ff7b72;
+}
+.dark .hljs-content .hljs-string,
+.dark .hljs-content .hljs-regexp,
+.dark .hljs-content .hljs-attr {
+  color: #a5d6ff;
+}
+.dark .hljs-content .hljs-number,
+.dark .hljs-content .hljs-literal,
+.dark .hljs-content .hljs-variable,
+.dark .hljs-content .hljs-template-variable {
+  color: #79c0ff;
+}
+.dark .hljs-content .hljs-title,
+.dark .hljs-content .hljs-title.function_,
+.dark .hljs-content .hljs-section,
+.dark .hljs-content .hljs-name {
+  color: #d2a8ff;
+}
+.dark .hljs-content .hljs-type,
+.dark .hljs-content .hljs-built_in,
+.dark .hljs-content .hljs-builtin-name,
+.dark .hljs-content .hljs-class .hljs-title,
+.dark .hljs-content .hljs-title.class_ {
+  color: #ffa657;
+}
+.dark .hljs-content .hljs-symbol,
+.dark .hljs-content .hljs-bullet,
+.dark .hljs-content .hljs-link {
+  color: #7ee787;
+}
