@@ -46,22 +46,12 @@ export default function Home() {
     toast.success('Link copied!');
   };
 
-  const focusEditor = () => {
-    const editor = document.getElementById('paste-editor');
-    editor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    editor?.querySelector('textarea')?.focus({ preventScroll: true });
-  };
-
   const publicCount = shares.filter((s) => s.is_public === 1).length;
   const publicPct = shares.length ? Math.round((publicCount / shares.length) * 100) : 0;
 
   return (
     <div className="pasteglass-bg">
-      <TopNav
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onCreateNew={focusEditor}
-      />
+      <TopNav searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       <SideNav
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((c) => !c)}

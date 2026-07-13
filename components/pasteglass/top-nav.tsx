@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Plus, Search } from 'lucide-react';
+import { Moon, Sun, Search } from 'lucide-react';
 
 interface TopNavProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onCreateNew: () => void;
 }
 
-export function TopNav({ searchQuery, onSearchChange, onCreateNew }: TopNavProps) {
+export function TopNav({ searchQuery, onSearchChange }: TopNavProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -34,13 +33,6 @@ export function TopNav({ searchQuery, onSearchChange, onCreateNew }: TopNavProps
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        <button
-          onClick={onCreateNew}
-          className="bg-pg-primary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="h-[18px] w-[18px]" />
-          <span className="hidden sm:inline">Create New</span>
-        </button>
         <div className="flex items-center gap-2 border-l border-pg-outline-variant dark:border-pg-outline/30 pl-4 ml-2">
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
