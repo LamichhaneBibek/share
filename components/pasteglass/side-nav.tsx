@@ -1,10 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import {
   Terminal,
-  History,
-  Globe,
   FileCode2,
   PanelLeftClose,
   PanelLeftOpen,
@@ -60,26 +57,7 @@ export function SideNav({ collapsed, onToggleCollapse, pasteCount }: SideNavProp
         </div>
       </div>
 
-      <nav className="flex-1 flex flex-col gap-1">
-        <Link
-          className={`flex items-center gap-3 py-3 bg-pg-primary/15 dark:bg-pg-primary/30 text-pg-primary dark:text-pg-primary-soft rounded-lg font-bold transition-all ${
-            collapsed ? 'justify-center px-0' : 'px-4'
-          }`}
-          href="/"
-        >
-          <History className="h-5 w-5" />
-          {!collapsed && <span className="text-sm">My Pastes</span>}
-        </Link>
-        <Link
-          className={`flex items-center gap-3 py-3 text-pg-ink-soft dark:text-pg-outline-variant hover:bg-pg-primary/10 dark:hover:bg-white/10 rounded-lg transition-all ${
-            collapsed ? 'justify-center px-0' : 'px-4'
-          }`}
-          href="/public"
-        >
-          <Globe className="h-5 w-5" />
-          {!collapsed && <span className="text-sm">Public Feed</span>}
-        </Link>
-      </nav>
+      <div className="flex-1" />
 
       <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-4">
         <div

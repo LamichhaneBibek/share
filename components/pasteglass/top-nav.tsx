@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import Link from 'next/link';
 import { Moon, Sun, Plus, Search } from 'lucide-react';
 
 interface TopNavProps {
@@ -23,20 +22,6 @@ export function TopNav({ searchQuery, onSearchChange, onCreateNew }: TopNavProps
         <span className="text-2xl md:text-3xl font-black tracking-tighter text-pg-primary dark:text-pg-primary-soft">
           PasteGlass
         </span>
-        <nav className="hidden md:flex gap-4">
-          <Link
-            className="text-xs font-semibold uppercase tracking-wider text-pg-primary dark:text-pg-primary-soft border-b-2 border-pg-primary pb-1"
-            href="/"
-          >
-            My Pastes
-          </Link>
-          <Link
-            className="text-xs font-semibold uppercase tracking-wider text-pg-ink-soft dark:text-pg-outline-variant hover:text-pg-primary transition-colors pb-1"
-            href="/public"
-          >
-            Public Feed
-          </Link>
-        </nav>
       </div>
       <div className="flex items-center gap-4">
         <div className="hidden md:block relative">
