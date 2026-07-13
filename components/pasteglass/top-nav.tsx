@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useTheme } from 'next-themes';
-import { Moon, Sun, Search } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+import { Moon, Sun, Search } from "lucide-react";
 
 interface TopNavProps {
   searchQuery: string;
@@ -19,7 +19,7 @@ export function TopNav({ searchQuery, onSearchChange }: TopNavProps) {
     <header className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-pg-ink/80 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm h-16 flex justify-between items-center px-4 md:px-6">
       <div className="flex items-center gap-8">
         <span className="text-2xl md:text-3xl font-black tracking-tighter text-pg-primary dark:text-pg-primary-soft">
-          PasteGlass
+          Share&Paste
         </span>
       </div>
       <div className="flex items-center gap-4">
@@ -35,11 +35,13 @@ export function TopNav({ searchQuery, onSearchChange }: TopNavProps) {
         </div>
         <div className="flex items-center gap-2 border-l border-pg-outline-variant dark:border-pg-outline/30 pl-4 ml-2">
           <button
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
             className="text-pg-ink-soft dark:text-pg-outline-variant hover:text-pg-primary transition-colors p-2 rounded-full hover:bg-pg-primary/10"
             title="Toggle theme"
           >
-            {mounted && resolvedTheme === 'dark' ? (
+            {mounted && resolvedTheme === "dark" ? (
               <Sun className="h-5 w-5" />
             ) : (
               <Moon className="h-5 w-5" />
