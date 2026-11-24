@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, CloudUpload, Copy, Globe, Lock, Send } from 'lucide-react';
+import { Check, ChevronDown, Copy, Globe, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { LANGUAGES, EXPIRY_OPTIONS, DEFAULT_EXPIRY } from '@/lib/languages';
+import { LANGUAGES, EXPIRY_OPTIONS, DEFAULT_EXPIRY, languageLabel } from '@/lib/languages';
 
 const DRAFT_KEY = 'pasteglass-draft';
 
@@ -20,6 +20,7 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
 
   // Restore draft on mount, persist on change
   useEffect(() => {
@@ -53,13 +54,13 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
   const copyContent = async () => {
     if (!content) return;
     await navigator.clipboard.writeText(content);
-    toast.success('Content copied!');
+    toast.success('Content copied');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      toast.error('Please enter some content to paste');
+      toast.error('Add some content first');
       return;
     }
     setLoading(true);
@@ -83,7 +84,7 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
       }
 
       const item = await response.json();
-      toast.success('Paste created!');
+      toast.success('Paste published');
       onShareCreated(item.slug);
       setTitle('');
       setContent('');
@@ -99,46 +100,54 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
     }
   };
 
-  const lines = content ? content.split('\n').length : 0;
+  const lines = content ? content.split('\n').length : 1;
   const chars = content.length;
+  const expiryLabel = EXPIRY_OPTIONS.find((o) => o.value === expiresIn)?.label ?? '';
 
-  const labelClass =
-    'text-xs font-semibold uppercase tracking-wider text-pg-outline dark:text-pg-outline-variant';
+  const syncGutter = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (gutterRef.current) {
+      gutterRef.current.style.transform = `translateY(-${e.currentTarget.scrollTop}px)`;
+    }
+  };
+
+  const labelClass = 'block text-sm text-text-secondary mb-2';
+  const segment = (active: boolean) =>
+    `flex-1 h-8 rounded-md text-sm flex items-center justify-center gap-2 transition-colors duration-150 ${
+      active
+        ? 'bg-card text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:bg-[#232838]'
+        : 'text-muted-foreground hover:text-foreground'
+    }`;
 
   return (
-    <div className="glass-panel p-6 md:p-8 rounded-xl shadow-lg" id="paste-editor">
-      <header className="mb-6 flex justify-between items-end">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-pg-primary dark:text-pg-primary-soft mb-2 block">
-            New Fragment
-          </span>
-          <h1 className="text-2xl md:text-[32px] font-bold tracking-tight text-pg-ink dark:text-pg-paper leading-tight">
-            Create New Paste
-          </h1>
-        </div>
-        <span className="hidden sm:flex px-3 py-1 bg-pg-primary/10 dark:bg-white/10 text-pg-primary dark:text-pg-primary-soft rounded text-xs font-bold uppercase items-center gap-1">
-          <CloudUpload className="h-3.5 w-3.5" /> Draft saved locally
+    <div className="bg-card border border-border rounded-2xl p-6 md:p-8" id="paste-editor">
+      <header className="mb-6 flex items-baseline justify-between gap-4">
+        <h1 className="text-[28px] leading-tight font-medium text-foreground">New paste</h1>
+        <span className="hidden sm:flex items-center gap-2 font-mono text-xs text-muted-foreground">
+          <Check className="h-4 w-4" strokeWidth={1.5} />
+          Draft saved locally
         </span>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className={labelClass}>Paste Title</label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
+          <div>
+            <label htmlFor="paste-title" className={labelClass}>Title</label>
             <input
-              className="w-full glass-input px-4 py-3 rounded-lg dark:text-pg-paper"
-              placeholder="e.g. Production Nginx Config"
+              id="paste-title"
+              className="field w-full h-10 px-3 rounded-lg text-sm"
+              placeholder="nginx.conf for staging"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
             />
           </div>
-          <div className="space-y-2">
-            <label className={labelClass}>Syntax Highlighting</label>
+          <div>
+            <label htmlFor="paste-language" className={labelClass}>Language</label>
             <div className="relative">
               <select
-                className="w-full glass-input px-4 py-3 rounded-lg appearance-none cursor-pointer dark:text-pg-paper"
+                id="paste-language"
+                className="field w-full h-10 pl-3 pr-9 rounded-lg text-sm appearance-none cursor-pointer"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
               >
@@ -148,74 +157,74 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pg-outline pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" strokeWidth={1.5} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className={labelClass}>Content</label>
-            <button
-              type="button"
-              onClick={copyContent}
-              className="p-1.5 text-pg-outline hover:text-pg-primary transition-colors"
-              title="Copy content"
+        {/* Editor: gutter, text, status bar */}
+        <div className="rounded-xl border border-input overflow-hidden focus-within:border-signal-ink focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--signal)_18%,transparent)] transition-[border-color,box-shadow] duration-150">
+          <div className="flex h-[360px] bg-background">
+            <div
+              aria-hidden
+              className="w-12 flex-none overflow-hidden bg-gutter border-r border-border select-none"
             >
-              <Copy className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="relative group">
+              <div ref={gutterRef} className="py-4 pr-3 text-right font-mono text-[13px] leading-6 text-muted-foreground/70">
+                {Array.from({ length: lines }, (_, i) => (
+                  <div key={i}>{i + 1}</div>
+                ))}
+              </div>
+            </div>
             <textarea
               ref={textareaRef}
-              className="w-full glass-input px-4 py-4 rounded-lg font-mono text-sm resize-none leading-relaxed min-h-[320px] dark:text-pg-paper"
-              placeholder="// Paste your code or text here..."
-              rows={14}
+              aria-label="Content"
+              className="thin-scroll flex-1 bg-transparent px-4 py-4 font-mono text-[13px] leading-6 text-foreground placeholder:text-muted-foreground resize-none outline-none whitespace-pre"
+              placeholder="Paste code or text"
+              wrap="off"
+              spellCheck={false}
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onScroll={syncGutter}
             />
-            <div className="absolute bottom-4 right-4 text-pg-outline-variant font-mono text-xs pointer-events-none opacity-60">
-              UTF-8 | {lines} lines | {chars} chars
-            </div>
+          </div>
+          <div className="h-8 px-3 flex items-center justify-between gap-4 bg-gutter border-t border-border font-mono text-xs text-muted-foreground tabular-nums">
+            <span className="truncate">
+              {languageLabel(language)} · {lines.toLocaleString('en-US')} {lines === 1 ? 'line' : 'lines'} · {chars.toLocaleString('en-US')} chars · UTF-8
+            </span>
+            <span className="flex items-center gap-3 flex-none">
+              <span className="hidden sm:inline">Expires in {expiryLabel}</span>
+              <button
+                type="button"
+                onClick={copyContent}
+                disabled={!content}
+                className="flex items-center gap-1 hover:text-foreground disabled:opacity-50 disabled:hover:text-muted-foreground transition-colors duration-150"
+                title="Copy content"
+              >
+                <Copy className="h-4 w-4" strokeWidth={1.5} />
+                Copy
+              </button>
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className={labelClass}>Visibility</label>
-            <div className="flex bg-white/50 dark:bg-white/5 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => setIsPublic(true)}
-                className={`flex-1 py-2 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-colors ${
-                  isPublic
-                    ? 'bg-white dark:bg-pg-primary/40 shadow-sm text-pg-primary dark:text-white'
-                    : 'text-pg-ink-soft dark:text-pg-outline-variant hover:bg-white/50 dark:hover:bg-white/10'
-                }`}
-              >
-                <Globe className="h-4 w-4" /> Public
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <span className={labelClass}>Visibility</span>
+            <div className="flex gap-1 p-1 h-10 bg-muted rounded-lg">
+              <button type="button" onClick={() => setIsPublic(false)} className={segment(!isPublic)}>
+                <Link2 className="h-4 w-4" strokeWidth={1.5} /> Unlisted
               </button>
-              <button
-                type="button"
-                onClick={() => setIsPublic(false)}
-                className={`flex-1 py-2 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-colors ${
-                  !isPublic
-                    ? 'bg-white dark:bg-pg-primary/40 shadow-sm text-pg-primary dark:text-white'
-                    : 'text-pg-ink-soft dark:text-pg-outline-variant hover:bg-white/50 dark:hover:bg-white/10'
-                }`}
-              >
-                <Lock className="h-4 w-4" /> Unlisted
+              <button type="button" onClick={() => setIsPublic(true)} className={segment(isPublic)}>
+                <Globe className="h-4 w-4" strokeWidth={1.5} /> Public
               </button>
             </div>
-            <p className="text-xs text-pg-outline dark:text-pg-outline-variant">
-              {isPublic ? 'Visible in the public feed' : 'Only accessible via direct link'}
-            </p>
           </div>
-          <div className="space-y-2">
-            <label className={labelClass}>Expiration</label>
+          <div>
+            <label htmlFor="paste-expiry" className={labelClass}>Expires after</label>
             <div className="relative">
               <select
-                className="w-full glass-input px-4 py-2.5 rounded-lg text-sm appearance-none cursor-pointer dark:text-pg-paper"
+                id="paste-expiry"
+                className="field w-full h-10 pl-3 pr-9 rounded-lg text-sm appearance-none cursor-pointer"
                 value={expiresIn}
                 onChange={(e) => setExpiresIn(e.target.value)}
               >
@@ -225,32 +234,36 @@ export function PasteEditor({ onShareCreated }: PasteEditorProps) {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pg-outline pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" strokeWidth={1.5} />
             </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div className="space-y-2">
-            <label className={`${labelClass} flex items-center gap-1.5`}>
-              <Lock className="h-3.5 w-3.5" />
-              Password <span className="normal-case font-normal tracking-normal">(optional)</span>
+          <div>
+            <label htmlFor="paste-password" className={labelClass}>
+              Password <span className="text-muted-foreground">optional</span>
             </label>
             <input
+              id="paste-password"
               type="password"
-              className="w-full glass-input px-4 py-2.5 rounded-lg text-sm dark:text-pg-paper"
-              placeholder="Set a password for protection"
+              autoComplete="new-password"
+              className="field w-full h-10 px-3 rounded-lg text-sm"
+              placeholder="None"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-border">
+          <p className="text-sm text-muted-foreground">
+            {isPublic ? 'Listed in the public feed' : 'Only people with the link can open it'}
+            {password ? ', password required' : ''}
+          </p>
           <button
             type="submit"
             disabled={loading || !content.trim()}
-            className="w-full h-[46px] primary-gradient text-white rounded-lg font-bold text-lg shadow-lg shadow-pg-primary/20 flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+            className="h-10 px-5 rounded-lg bg-signal text-signal-foreground text-sm font-medium hover:bg-[#f4b84d] active:scale-[0.98] transition-[background-color,transform,opacity] duration-150 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
           >
-            <Send className="h-5 w-5" />
-            {loading ? 'Publishing...' : 'Publish Paste'}
+            {loading ? 'Publishing…' : 'Publish paste'}
           </button>
         </div>
       </form>

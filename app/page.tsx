@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Clock, FileJson2, Lock, Sparkles, X } from 'lucide-react';
+import { ArrowUpRight, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopNav } from '@/components/pasteglass/top-nav';
-import { SideNav } from '@/components/pasteglass/side-nav';
 import { PasteEditor } from '@/components/pasteglass/paste-editor';
 import { RecentFeed } from '@/components/pasteglass/recent-feed';
 import { ShareItem } from '@/lib/shares';
@@ -13,7 +12,6 @@ export default function Home() {
   const [shares, setShares] = useState<ShareItem[]>([]);
   const [newShareUrl, setNewShareUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const fetchShares = async () => {
     try {
@@ -43,132 +41,67 @@ export default function Home() {
   const copyShareUrl = async () => {
     if (!newShareUrl) return;
     await navigator.clipboard.writeText(newShareUrl);
-    toast.success('Link copied!');
+    toast.success('Link copied');
   };
 
   const publicCount = shares.filter((s) => s.is_public === 1).length;
-  const publicPct = shares.length ? Math.round((publicCount / shares.length) * 100) : 0;
+  const protectedCount = shares.filter((s) => s.password).length;
 
   return (
-    <div className="pasteglass-bg">
+    <div className="min-h-screen bg-background">
       <TopNav searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-      <SideNav
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
-        pasteCount={shares.length}
-      />
 
-      <main
-        className={`pt-24 pb-12 px-4 md:px-6 transition-[margin] duration-300 ${
-          sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
-        }`}
-      >
-        <div className="max-w-[1200px] mx-auto space-y-6">
-          {/* New share URL banner */}
-          {newShareUrl && (
-            <div className="glass-panel rounded-xl p-4 flex items-center gap-3">
-              <Sparkles className="h-4 w-4 text-pg-primary dark:text-pg-primary-soft flex-shrink-0" />
-              <input
-                readOnly
-                value={newShareUrl}
-                className="glass-input flex-1 rounded-lg px-3 py-2 text-sm font-mono dark:text-pg-paper min-w-0"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
+      <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8">
+        {newShareUrl && (
+          <div className="rise mb-6 bg-card border border-border rounded-2xl p-4 md:pl-6 flex flex-col md:flex-row md:items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-text-secondary mb-1">Link ready</p>
+              <p className="font-mono text-lg text-foreground truncate select-all">{newShareUrl}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-none">
               <button
                 onClick={copyShareUrl}
-                className="primary-gradient text-white px-4 py-2 rounded-lg font-bold text-sm flex-shrink-0 hover:opacity-90 transition-opacity"
+                className="h-10 px-5 rounded-lg bg-signal text-signal-foreground text-sm font-medium hover:bg-[#f4b84d] active:scale-[0.98] transition-[background-color,transform] duration-150"
               >
-                Copy
+                Copy link
               </button>
+              <a
+                href={newShareUrl}
+                className="h-10 px-4 rounded-lg border border-input text-sm text-foreground flex items-center gap-2 hover:bg-muted transition-colors duration-150"
+              >
+                Open <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+              </a>
               <button
                 onClick={() => setNewShareUrl(null)}
-                className="p-2 text-pg-outline hover:text-pg-primary transition-colors flex-shrink-0"
+                className="h-10 w-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150"
                 title="Dismiss"
+                aria-label="Dismiss"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
-          )}
-
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            {/* Left/Center: Editor + features */}
-            <section className="xl:col-span-8 space-y-6">
-              <PasteEditor onShareCreated={handleShareCreated} />
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="glass-panel p-4 rounded-xl flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-pg-primary/10 flex items-center justify-center text-pg-primary dark:text-pg-primary-soft">
-                    <Lock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-pg-ink dark:text-pg-paper">
-                      Password Protect
-                    </h4>
-                    <p className="text-xs text-pg-outline dark:text-pg-outline-variant">
-                      Lock pastes with a code
-                    </p>
-                  </div>
-                </div>
-                <div className="glass-panel p-4 rounded-xl flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-pg-secondary/10 flex items-center justify-center text-pg-secondary">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-pg-ink dark:text-pg-paper">
-                      Custom Expiry
-                    </h4>
-                    <p className="text-xs text-pg-outline dark:text-pg-outline-variant">
-                      10 minutes to 15 days
-                    </p>
-                  </div>
-                </div>
-                <div className="glass-panel p-4 rounded-xl flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-700 dark:text-blue-400">
-                    <FileJson2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-pg-ink dark:text-pg-paper">
-                      Raw & Download
-                    </h4>
-                    <p className="text-xs text-pg-outline dark:text-pg-outline-variant">
-                      Plain-text raw view
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Right: Feed + stats */}
-            <aside className="xl:col-span-4 space-y-6">
-              <RecentFeed
-                shares={shares}
-                searchQuery={searchQuery}
-                onDelete={refresh}
-                onUpdate={refresh}
-              />
-
-              <div className="glass-panel p-6 rounded-xl">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-pg-primary dark:text-pg-primary-soft">
-                    Your Pastes
-                  </h4>
-                  <span className="text-xs font-bold text-pg-ink dark:text-pg-paper">
-                    {shares.length} total
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-pg-outline-variant/40 dark:bg-white/10 rounded-full overflow-hidden mb-4">
-                  <div
-                    className="h-full primary-gradient rounded-full transition-[width] duration-500"
-                    style={{ width: `${publicPct}%` }}
-                  />
-                </div>
-                <p className="text-xs text-pg-ink-soft dark:text-pg-outline-variant">
-                  {publicCount} public · {shares.length - publicCount} unlisted. Pastes expire
-                  after your chosen duration (up to 15 days).
-                </p>
-              </div>
-            </aside>
           </div>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
+          <section className="space-y-4">
+            <PasteEditor onShareCreated={handleShareCreated} />
+            <p className="px-2 text-sm text-muted-foreground">
+              Pastes expire after 10 minutes to 15 days. Each one has a raw view and a download, and
+              can be locked with a password.
+              <span className="block mt-1 font-mono text-xs tabular-nums">
+                {shares.length} {shares.length === 1 ? 'paste' : 'pastes'} · {publicCount} public ·{' '}
+                {shares.length - publicCount} unlisted · {protectedCount} protected
+              </span>
+            </p>
+          </section>
+
+          <RecentFeed
+            shares={shares}
+            searchQuery={searchQuery}
+            onDelete={refresh}
+            onUpdate={refresh}
+          />
         </div>
       </main>
     </div>

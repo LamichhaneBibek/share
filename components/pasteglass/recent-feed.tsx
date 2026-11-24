@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { Copy, EyeOff, Globe, Link2, Lock, Sparkles, Trash2 } from 'lucide-react';
+import { Copy, EyeOff, Globe, Link2, Lock, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ShareItem } from '@/lib/shares';
 import { languageLabel } from '@/lib/languages';
@@ -54,7 +54,7 @@ export function RecentFeed({ shares, searchQuery, onDelete, onUpdate }: RecentFe
 
   const copyLink = async (slug: string) => {
     await navigator.clipboard.writeText(`${window.location.origin}/share/${slug}`);
-    toast.success('Link copied!');
+    toast.success('Link copied');
   };
 
   const handleDelete = async (slug: string) => {
@@ -90,62 +90,80 @@ export function RecentFeed({ shares, searchQuery, onDelete, onUpdate }: RecentFe
   const latest = shares[0];
 
   const tabClass = (active: boolean) =>
-    `flex-1 py-4 text-center text-xs font-semibold uppercase tracking-wider transition-colors ${
+    `h-8 px-3 rounded-md text-sm transition-colors duration-150 ${
       active
-        ? 'text-pg-primary dark:text-pg-primary-soft border-b-2 border-pg-primary bg-white/40 dark:bg-white/5'
-        : 'text-pg-ink-soft dark:text-pg-outline-variant hover:text-pg-primary hover:bg-white/20 dark:hover:bg-white/5'
+        ? 'bg-card text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:bg-[#232838] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+        : 'text-muted-foreground hover:text-foreground'
     }`;
 
+  const iconButton =
+    'h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150';
+
+  const emptyText = searchQuery.trim()
+    ? 'No pastes match this search'
+    : tab === 'recent'
+    ? 'Nothing here yet. Pastes you publish show up in this list'
+    : publicLoaded
+    ? 'No public pastes right now'
+    : 'Loading public pastes…';
+
   return (
-    <div className="glass-panel rounded-xl overflow-hidden flex flex-col h-[700px]">
-      <div className="flex border-b border-pg-outline-variant/30">
-        <button className={tabClass(tab === 'recent')} onClick={() => setTab('recent')}>
-          My Recent
-        </button>
-        <button className={tabClass(tab === 'public')} onClick={() => setTab('public')}>
-          Public Feed
-        </button>
+    <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-[560px] xl:h-[calc(100vh-104px)] xl:min-h-[560px] xl:sticky xl:top-20">
+      <div className="h-14 px-4 flex items-center justify-between border-b border-border">
+        <h2 className="text-sm font-medium text-foreground">
+          {tab === 'recent' ? 'Your pastes' : 'Public pastes'}
+          <span className="ml-2 font-mono text-xs text-muted-foreground tabular-nums">{items.length}</span>
+        </h2>
+        <div className="flex gap-1 p-1 bg-muted rounded-lg" role="tablist">
+          <button role="tab" aria-selected={tab === 'recent'} className={tabClass(tab === 'recent')} onClick={() => setTab('recent')}>
+            Mine
+          </button>
+          <button role="tab" aria-selected={tab === 'public'} className={tabClass(tab === 'public')} onClick={() => setTab('public')}>
+            Public
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto glass-scroll p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto thin-scroll p-2">
         {items.map((share) => (
           <article
             key={share.id}
+            tabIndex={0}
             onClick={() => router.push(`/share/${share.slug}`)}
-            className="group p-4 rounded-lg bg-white/40 dark:bg-white/5 border border-white/50 dark:border-white/5 hover:border-pg-primary/30 transition-all cursor-pointer"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') router.push(`/share/${share.slug}`);
+            }}
+            className="group px-3 py-3 rounded-xl hover:bg-muted/70 focus-visible:bg-muted/70 transition-colors duration-150 cursor-pointer"
           >
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="text-base font-semibold text-pg-ink dark:text-pg-paper group-hover:text-pg-primary dark:group-hover:text-pg-primary-soft transition-colors truncate mr-2">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h3 className="text-sm font-medium text-foreground truncate">
                 {share.title?.trim() ||
                   (share.content.length > 40
-                    ? share.content.substring(0, 40) + '...'
+                    ? share.content.substring(0, 40) + '…'
                     : share.content)}
-              </h4>
-              <span className="flex items-center gap-1.5 flex-shrink-0">
-                {share.password && <Lock className="h-4 w-4 text-amber-500" />}
-                {share.is_public === 1 ? (
-                  <Globe className="h-4 w-4 text-pg-primary dark:text-pg-primary-soft" />
-                ) : (
-                  <EyeOff className="h-4 w-4 text-pg-outline" />
-                )}
+              </h3>
+              <span className="flex items-center gap-2 flex-none text-muted-foreground">
+                {share.password && <Lock className="h-4 w-4" strokeWidth={1.5} aria-label="Password protected" />}
+                {share.is_public === 1 && <Globe className="h-4 w-4" strokeWidth={1.5} aria-label="Public" />}
               </span>
             </div>
-            <p className="text-sm text-pg-ink-soft dark:text-pg-outline-variant line-clamp-2 mb-3 font-mono">
+            <p className="font-mono text-xs leading-5 text-text-secondary line-clamp-2 mb-2 break-all">
               {share.content.substring(0, 120)}
             </p>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-pg-primary/10 text-pg-primary dark:text-pg-primary-soft text-[10px] font-bold rounded uppercase">
-                  {languageLabel(share.language)}
-                </span>
-                <span className="text-xs text-pg-outline">
+            <div className="flex items-center justify-between gap-2 h-8">
+              <div className="flex items-center gap-2 min-w-0 font-mono text-xs text-muted-foreground">
+                <span className="text-foreground/80">/{share.slug}</span>
+                <span aria-hidden>·</span>
+                <span className="truncate">{languageLabel(share.language)}</span>
+                <span aria-hidden>·</span>
+                <span className="truncate">
                   {formatDistanceToNow(parseDbDate(share.created_at), { addSuffix: true })}
                 </span>
               </div>
               {tab === 'recent' && (
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150">
                   <button
-                    className="p-1.5 text-pg-outline hover:text-pg-primary transition-colors"
+                    className={iconButton}
                     title={share.is_public === 1 ? 'Make unlisted' : 'Make public'}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -153,41 +171,41 @@ export function RecentFeed({ shares, searchQuery, onDelete, onUpdate }: RecentFe
                     }}
                   >
                     {share.is_public === 1 ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-4 w-4" strokeWidth={1.5} />
                     ) : (
-                      <Globe className="h-4 w-4" />
+                      <Globe className="h-4 w-4" strokeWidth={1.5} />
                     )}
                   </button>
                   <button
-                    className="p-1.5 text-pg-outline hover:text-pg-primary transition-colors"
+                    className={iconButton}
                     title="Copy link"
                     onClick={(e) => {
                       e.stopPropagation();
                       copyLink(share.slug);
                     }}
                   >
-                    <Link2 className="h-4 w-4" />
+                    <Link2 className="h-4 w-4" strokeWidth={1.5} />
                   </button>
                   <button
-                    className="p-1.5 text-pg-outline hover:text-pg-primary transition-colors"
+                    className={iconButton}
                     title="Copy content"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigator.clipboard.writeText(share.content);
-                      toast.success('Content copied!');
+                      toast.success('Content copied');
                     }}
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-4 w-4" strokeWidth={1.5} />
                   </button>
                   <button
-                    className="p-1.5 text-pg-outline hover:text-red-500 transition-colors"
+                    className={`${iconButton} hover:text-destructive`}
                     title="Delete"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(share.slug);
                     }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                   </button>
                 </div>
               )}
@@ -196,40 +214,21 @@ export function RecentFeed({ shares, searchQuery, onDelete, onUpdate }: RecentFe
         ))}
 
         {items.length === 0 && (
-          <div className="p-8 text-center space-y-3 opacity-60">
-            <Sparkles className="h-10 w-10 mx-auto text-pg-outline-variant" />
-            <p className="text-pg-ink-soft dark:text-pg-outline-variant text-sm italic">
-              {searchQuery.trim()
-                ? 'No pastes match your search.'
-                : tab === 'recent'
-                ? 'No pastes yet. Create your first one!'
-                : publicLoaded
-                ? 'No public pastes yet.'
-                : 'Loading public feed...'}
-            </p>
-          </div>
+          <p className="px-4 py-12 text-center text-sm text-muted-foreground">{emptyText}</p>
         )}
       </div>
 
-      <div className="p-4 bg-white/50 dark:bg-pg-ink/30 border-t border-pg-outline-variant/20">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[10px] font-bold text-pg-ink-soft dark:text-pg-outline-variant uppercase tracking-wider">
-            Latest Activity
-          </span>
-        </div>
-        <div className="bg-black/5 dark:bg-white/5 rounded p-2 font-mono text-[10px] text-pg-ink-soft dark:text-pg-outline-variant overflow-hidden">
-          {latest ? (
-            <div className="flex justify-between">
-              <span className="truncate mr-2"># {latest.slug} created</span>
-              <span className="opacity-50 flex-shrink-0">
-                {formatDistanceToNow(parseDbDate(latest.created_at), { addSuffix: true })}
-              </span>
-            </div>
-          ) : (
-            <span className="opacity-50"># no activity yet</span>
-          )}
-        </div>
+      <div className="h-10 px-4 flex items-center justify-between gap-4 border-t border-border bg-gutter font-mono text-xs text-muted-foreground">
+        {latest ? (
+          <>
+            <span className="truncate">Last published /{latest.slug}</span>
+            <span className="flex-none">
+              {formatDistanceToNow(parseDbDate(latest.created_at), { addSuffix: true })}
+            </span>
+          </>
+        ) : (
+          <span>No activity yet</span>
+        )}
       </div>
     </div>
   );

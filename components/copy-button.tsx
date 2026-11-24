@@ -10,7 +10,7 @@ interface CopyButtonProps {
   label?: string;
 }
 
-export function CopyButton({ content, label = 'Copy to Clipboard' }: CopyButtonProps) {
+export function CopyButton({ content, label = 'Copy' }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -44,7 +44,7 @@ export function CopyButton({ content, label = 'Copy to Clipboard' }: CopyButtonP
       {copied ? (
         <>
           <Check className="w-4 h-4" />
-          Copied!
+          Copied
         </>
       ) : (
         <>
