@@ -64,11 +64,11 @@ export function CodeViewer({ content, language }: CodeViewerProps) {
   const lineCount = content.split('\n').length;
 
   return (
-    <div className="rounded-xl border border-border bg-muted/40 overflow-x-auto">
+    <div className="thin-scroll rounded-xl border border-border bg-card overflow-x-auto">
       <div className="flex font-mono text-[13px] leading-6 min-w-max w-full">
         <div
           aria-hidden
-          className="sticky left-0 flex-none select-none text-right text-muted-foreground/50 px-3 py-4 bg-card border-r border-border"
+          className="sticky left-0 flex-none select-none text-right text-muted-foreground/70 pl-4 pr-3 py-4 bg-gutter border-r border-border tabular-nums"
         >
           {Array.from({ length: lineCount }, (_, i) => (
             <div key={i}>{i + 1}</div>
